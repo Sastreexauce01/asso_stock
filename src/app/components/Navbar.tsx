@@ -1,14 +1,14 @@
 "use client"
-import { UserButton,  } from '@clerk/nextjs'
+import { UserButton,useUser  } from '@clerk/nextjs'
 import {  ListTree, Menu, PackagePlus, ShoppingBasket, Warehouse, X  , HandHeart , Receipt , LayoutDashboard} from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import React, {  useState } from 'react'
-// import { checkAndAddAssociation } from '../actions'
+import React, {  useEffect, useState } from 'react'
+import { checkAndAddAssociation } from '@/app/actions'
 // import Stock from './Stock'
 
 const Navbar = () => {
-    // const { user } = useUser()
+    const { user } = useUser()
 
     const pathname = usePathname();
     const [menuOpen, setMenuOpen] = useState(false)
@@ -22,11 +22,11 @@ const Navbar = () => {
         { href: "/transactions", label: "Transactions", icon: Receipt }
     ]
 
-    // useEffect(() => {
-    //     if (user?.primaryEmailAddress?.emailAddress && user.fullName) {
-    //         checkAndAddAssociation(user?.primaryEmailAddress?.emailAddress, user.fullName)
-    //     }
-    // }, [user])
+    useEffect(() => {
+        if (user?.primaryEmailAddress?.emailAddress && user.fullName) {
+            checkAndAddAssociation(user?.primaryEmailAddress?.emailAddress, user.fullName)
+        }
+    }, [user])
 
 
     const renderLinks = (baseClass: string) => (
