@@ -4,15 +4,16 @@ import Wrapper from "../components/Wrapper";
 import { useUser } from "@clerk/nextjs";
 import { FormDataType } from "@/type";
 import { Category } from "@prisma/client";
-import { readCategories } from "../actions";
+import { createProduct, readCategories } from "../actions";
 import { FileImage } from "lucide-react";
 import ProductImage from "../components/ProductImage";
 import { toast } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress as string;
-//   const router = useRouter();
+  const router = useRouter();
 
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -50,35 +51,61 @@ const Page = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0] || null
-    setFile(selectedFile)
-    if (selectedFile) {
-      setPreviewUrl(URL.createObjectURL(selectedFile))
-    }
-  }
-
-  const handleSubmit = async ()=>{
-
-     // Vérifie les champs du formulaire
-     if (!formData.name || !formData.description || !formData.price || !formData.categoryId || !formData.unit) {
-        toast.error("Veuillez remplir tous les champs du formulaire.")
-        return
-      }
+    const selectedFile = e.target.files?.[0] || null;
     
-      if (!file) {
-        toast.error("Veuillez sélectionner une image.")
-        return
+    setFile(selectedFile);
+    console.log(file);
+    if (selectedFile) {
+      setPreviewUrl(URL.createObjectURL(selectedFile));
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Vérifie les champs du formulaire
+    if (
+      !formData.name ||
+      !formData.description ||
+      !formData.price ||
+      !formData.categoryId ||
+      !formData.unit
+    ) {
+      toast.error("Veuillez remplir tous les champs du formulaire.");
+      return;
+    }
+
+    if (!file) {
+      toast.error("Veuillez sélectionner une image.");
+      return;
+    }
+
+    try {
+      const imageData = new FormData();
+      imageData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: imageData,
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        throw new Error("Erreur lors de l’upload de l’image.");
       }
 
-      try {
-        
-        
-      } catch (error) {
-        console.log(error)
-      toast.error("Il y a une erreur")
-        
-      }
-  }
+      // Ajout de l'image dans le formData
+      formData.imageUrl = data.url;
+
+      // Création du produit
+      await createProduct(formData, email);
+
+      toast.success("Produit créé avec succès");
+      router.push("/products");
+    } catch (error) {
+      console.log(error);
+      toast.error("Il y a une erreur");
+    }
+  };
   return (
     <Wrapper>
       <div className="flex justify-cenetr items-center">
@@ -148,10 +175,8 @@ const Page = () => {
                 className="file-input file-input-bordered w-full"
                 onChange={handleFileChange}
               />
-
-              <button 
-              onClick={handleSubmit} 
-              className="btn btn-primary">
+              
+              <button onClick={handleSubmit} className="btn btn-primary">
                 Créer le produit
               </button>
             </div>
@@ -160,15 +185,18 @@ const Page = () => {
               {previewUrl && previewUrl !== "" ? (
                 <div>
                   <ProductImage
-                  src={previewUrl}
-                  alt="preview"
-                  heightClass='h-40'
-                  widthClass='w-40'
-                />
+                    src={previewUrl}
+                    alt="preview"
+                    heightClass="h-40"
+                    widthClass="w-40"
+                  />
                 </div>
               ) : (
                 <div className="wiggle-animation">
-                  <FileImage strokeWidth={1} className='h-10 w-10 text-primary' />
+                  <FileImage
+                    strokeWidth={1}
+                    className="h-10 w-10 text-primary"
+                  />
                 </div>
               )}
             </div>

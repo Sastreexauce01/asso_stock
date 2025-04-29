@@ -15,10 +15,9 @@ const ProductImage: React.FC<ProductImageProps> = ({ src, alt, heightClass, widt
                 <Image
                     src={src}
                     alt={alt}
-                    quality={100}
+                    quality={75}
                     className='object-cover'
-                    height={500}
-                    width={500}
+                    fill 
                 />
             </div>
         </div>
